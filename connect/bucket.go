@@ -56,3 +56,56 @@ func (b *Bucket) Room(rid int) (room *Room) {
 	b.cLock.RUnlock()
 	return
 }
+
+func (b *Bucket) Put(userId int, roomId int, ch *Channel) (err error) {
+	var (
+		room *Room
+		ok bool
+	)
+	b.cLock.Lock()
+	if roomId != NoRoom {
+		if room, ok = b.rooms[roomId]; !ok {
+			room = NewRoom(roomId)
+			b.rooms[roomId] = room
+		}
+		ch.Room = room
+	}
+	b.chs[userId] = ch
+	ch.userId = userId
+	b.cLock.Unlock()
+
+	if room != nil {
+		room.Put(ch)
+	}
+ 	return
+}
+
+func (b *Bucket) DeleteChannel(ch *Channel) {
+	var (
+		ok bool
+		room *Room
+	)
+
+	b.cLock.RLock()
+	if ch, ok = b.chs[ch.userId]; ok {
+		room = ch.Room
+		delete(b.chs, ch.userId)
+	}
+	if room != nil {
+		if room.DeleteChannel(ch) && room.drop == true {
+			delete(b.rooms, room.Id)
+		}
+	}
+	b.cLock.RUnlock()
+}
+
+func (b *Bucket) Channel(userId int) (ch *Channel) {
+	b.cLock.RLock()
+	ch = b.chs[userId]
+	b.cLock.RUnlock()
+	return
+}
+
+func (b *Bucket) BroadcastRoom(pushRoomMsgReq *proto.PushRoomMsgRequest) {
+
+}

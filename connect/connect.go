@@ -1,8 +1,9 @@
 package connect
 
 import (
-	"github.com/google/uuid"
 	"fmt"
+	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 	"gochat/config"
 	"runtime"
 	"time"
@@ -53,5 +54,7 @@ func (c *Connect) Run() {
 	// init Connect layer rpc server ,task layer will call this
 
 	// start Connect layer server handler persistent connection
-
+	if err := c.InitWebsocket(); err != nil {
+		logrus.Panicf("Connect layer InitWebsocket() error:  %s \n", err.Error())
+	}
 }

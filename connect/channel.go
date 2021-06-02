@@ -7,7 +7,7 @@ import (
 )
 
 type Channel struct {
-	Room      Room
+	Room      *Room
 	Next      *Channel
 	Prev      *Channel
 	broadcast chan *proto.Msg
