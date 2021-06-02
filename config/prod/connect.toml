@@ -1,0 +1,32 @@
+[connect-base]
+certPath = ""
+keyPath = ""
+
+[connect-websocket]
+bind = "0.0.0.0:7000"
+
+[connect-tcp]
+bind = "0.0.0.0:7001,0.0.0.0:7002"
+sendBuf = 4096
+receivedBuf = 4096
+keepalive = false
+reader = 32
+readBuf = 1024
+readBufSize = 8192
+writer = 32
+writeBuf = 1024
+writeBufSize = 8192
+
+[connect-rpcAddress-websockets]
+address = "tcp@0.0.0.0:6192,tcp@0.0.0.0:6193"
+
+[connect-rpcAddress-tcp]
+address = "tcp@0.0.0.0:6914,tcp@0.0.0.0:6915"
+
+[connect-bucket]
+cpuNum = 4
+channel = 1024
+room = 1024
+svrProto = 80
+routineAmount = 32
+routineSize = 20
