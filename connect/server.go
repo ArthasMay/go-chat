@@ -54,7 +54,7 @@ func (s *Server) writePump(ch *Channel, c *Connect) {
 		select {
 		case message, ok := <- ch.broadcast:
 			// write data dead time, like http timeout, default 10s
-			ch.conn.SetReadDeadline(time.Now().Add(s.Options.WriteWait))
+			ch.conn.SetWriteDeadline(time.Now().Add(s.Options.WriteWait))
 			if !ok {
 				logrus.Warn("SetWriteDeadline not ok")
 				ch.conn.WriteMessage(websocket.CloseMessage, []byte{})
@@ -74,7 +74,7 @@ func (s *Server) writePump(ch *Channel, c *Connect) {
 		case <-ticker.C:
 			ch.conn.SetWriteDeadline(time.Now().Add(s.Options.WriteWait))
 			logrus.Infof("websocket.PingMessage: %v", websocket.PingMessage)
-			if err := ch.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+			if err := ch.conn.WriteMessage(websocket.PingMessage, []byte("server-ping")); err != nil {
 				return
 			}
 		}
@@ -100,6 +100,10 @@ func (s *Server) ReadPump(ch *Channel, c *Connect) {
 
 	ch.conn.SetReadLimit(s.Options.MaxMessageSize)
 	ch.conn.SetReadDeadline(time.Now().Add(s.Options.PongWait))
+	ch.conn.SetPongHandler(func(string) error {
+		ch.conn.SetReadDeadline(time.Now().Add(s.Options.PongWait))
+		return nil
+	})
 
 	for {
 		_, message, err := ch.conn.ReadMessage()
@@ -108,22 +112,40 @@ func (s *Server) ReadPump(ch *Channel, c *Connect) {
 				logrus.Errorf("readPump ReadMessage err:%s", err.Error())
 				return
 			}
+		}
 
-			if message == nil {
-				return
-			}
+		if message == nil {
+			return
+		}
 
-			var connectReq *proto.ConnectRequest
-			logrus.Infof("get a message :%s", message)
-	        if err := json.Unmarshal([]byte(message), &connectReq); err != nil {
-				logrus.Errorf("message struct %+v", connectReq)
-			}
-			if connectReq.AuthToken == "" {
-				logrus.Errorf("s.operator.Connect no authToken")
-				return
-			}
-			connectReq.ServerId = c.ServerId
+		var connReq *proto.ConnectRequest
+		logrus.Infof("get a message :%s", message)
+		if err := json.Unmarshal([]byte(message), &connReq); err != nil {
+			logrus.Errorf("message struct %+v", connReq)
+		}
+		if connReq.AuthToken == "" {
+			logrus.Errorf("s.operator.Connect no authToken")
+			return
+		}
+		connReq.ServerId = c.ServerId
+		userId, err := s.operator.ConnectWithoutRPC(connReq)
+		if err != nil {
+			logrus.Errorf("s.operator.Connect error %s", err.Error())
+			return
+		}
+		if userId == 0 {
+			logrus.Error("Invalid AuthToken ,userId empty")
+			return
+		}
 
+		ch.conn.WriteMessage(websocket.TextMessage, []byte("connect success!"))
+		logrus.Infof("websocket rpc call return userId:%d,RoomId:%d", userId, connReq.RoomId)
+		b := s.Bucket(userId)
+		// insert into a bucket
+		err = b.Put(userId, connReq.RoomId, ch)
+		if err != nil {
+			logrus.Errorf("conn close err: %s", err.Error())
+			ch.conn.Close()
 		}
 	}
 }

@@ -2,13 +2,11 @@ package main
 
 import (
 	"fmt"
+	"gochat/connect"
 )
 
 func main()  {
-	//var b int64 = 32
-	//num := atomic.AddInt64(&b, 1)
-	//fmt.Println(num, b)
-	test()
+	connect.New().Run()
 }
 
 func test() {

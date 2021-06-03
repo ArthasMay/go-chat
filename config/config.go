@@ -17,7 +17,7 @@ type Config struct {
 }
 
 func init() {
-
+	Init()
 }
 
 func Init() {
@@ -109,7 +109,7 @@ type ConnectBucket struct {
 
 type ConnectConfig struct {
 	ConnectBase                ConnectBase                  `mapstructure:"connect-base"`
-	ConnectRpcAddressWebsockets ConnectRpcAddressWebsockets `mapstructure:"connect-rpcAddress-websockts"`
+	ConnectRpcAddressWebsockets ConnectRpcAddressWebsockets `mapstructure:"connect-rpcAddress-websockets"`
 	ConnectRpcAddressTcp       ConnectRpcAddressTcp         `mapstructure:"connect-rpcAddress-tcp"`
 	ConnectBucket              ConnectBucket                `mapstructure:"connect-bucket"`
 	ConnectWebsocket           ConnectWebsocket             `mapstructure:"connect-websocket"`

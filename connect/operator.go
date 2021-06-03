@@ -13,3 +13,12 @@ type Operator interface {
 type DefaultOperator struct {
 
 }
+
+func (o *DefaultOperator)ConnectWithoutRPC(conn *proto.ConnectRequest) (userId int, err error) {
+	userId = 100001
+	return
+}
+
+func (o *DefaultOperator)DisconnectWithoutRPC(disconn *proto.DisConnectRequest) (err error) {
+	return
+}
